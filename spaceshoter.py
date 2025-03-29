@@ -97,42 +97,135 @@ for _ in range(8):
     all_sprites.add(enemy)
     enemies.add(enemy)
 
-# Game loop
-running = True
-while running:
-    clock.tick(60)
+def show_welcome_screen():
+    # Set up welcome screen
+    welcome_font = pygame.font.SysFont(None, 48)
+    button_font = pygame.font.SysFont(None, 36)
+    welcome_text = welcome_font.render("Welcome to Lucas's Game of Space Shooter", True, WHITE)
+    start_button_text = button_font.render("START", True, BLACK)
+    
+    # Button dimensions
+    button_width, button_height = 200, 50
+    button_x = (WIDTH - button_width) // 2
+    button_y = (HEIGHT - button_height) // 2 + 100
+    button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
-    # Event handling
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
+    while True:
+        screen.fill(BLACK)
+        screen.blit(welcome_text, ((WIDTH - welcome_text.get_width()) // 2, HEIGHT // 2 - 100))
+        pygame.draw.rect(screen, WHITE, button_rect)
+        screen.blit(start_button_text, (button_x + (button_width - start_button_text.get_width()) // 2, 
+                                        button_y + (button_height - start_button_text.get_height()) // 2))
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Left click on START button
+                    return
+
+def show_game_over_screen(final_score):
+    # Set up game over screen
+    game_over_font = pygame.font.SysFont(None, 72)
+    button_font = pygame.font.SysFont(None, 36)
+    game_over_text = game_over_font.render("GAME OVER", True, WHITE)
+    score_text = button_font.render(f"Your Score: {final_score}", True, WHITE)
+    play_again_text = button_font.render("PLAY AGAIN", True, BLACK)
+    
+    # Button dimensions
+    button_width, button_height = 200, 50
+    button_x = (WIDTH - button_width) // 2
+    button_y = (HEIGHT - button_height) // 2 + 100
+    button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+
+    while True:
+        screen.fill(BLACK)
+        screen.blit(game_over_text, ((WIDTH - game_over_text.get_width()) // 2, HEIGHT // 2 - 150))
+        screen.blit(score_text, ((WIDTH - score_text.get_width()) // 2, HEIGHT // 2 - 50))
+        pygame.draw.rect(screen, WHITE, button_rect)
+        screen.blit(play_again_text, (button_x + (button_width - play_again_text.get_width()) // 2, 
+                                      button_y + (button_height - play_again_text.get_height()) // 2))
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Left click on PLAY AGAIN button
+                    return
+
+# Initialize firing timer
+firing = False
+firing_timer = 0
+firing_interval = 0.000001  # Interval in seconds
+
+# Main execution
+if __name__ == "__main__":
+    while True:
+        show_welcome_screen()
+
+        # Reset score and game state
+        score = 0
+        all_sprites.empty()
+        enemies.empty()
+        bullets.empty()
+
+        # Recreate player and enemies
+        player = Player()
+        all_sprites.add(player)
+        for _ in range(8):
+            enemy = Enemy()
+            all_sprites.add(enemy)
+            enemies.add(enemy)
+
+        # Game loop
+        running = True
+        while running:
+            clock.tick(60)
+            current_time = pygame.time.get_ticks() / 1000  # Get current time in seconds
+
+            # Event handling
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:  # Left mouse button
+                        firing = True
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:  # Left mouse button
+                        firing = False
+
+            # Handle continuous firing
+            if firing and current_time - firing_timer >= firing_interval:
                 player.shoot()
+                firing_timer = current_time
 
-    # Update
-    all_sprites.update()
+            # Update
+            all_sprites.update()
 
-    # Check for collisions
-    hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
-    for hit in hits:
-        score += 10  # Increment score by 10
-        enemy = Enemy()
-        all_sprites.add(enemy)
-        enemies.add(enemy)
+            # Check for collisions
+            hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
+            for hit in hits:
+                score += 10  # Increment score by 10
+                enemy = Enemy()
+                all_sprites.add(enemy)
+                enemies.add(enemy)
 
-    if pygame.sprite.spritecollideany(player, enemies):
-        running = False
+            if pygame.sprite.spritecollideany(player, enemies):
+                running = False
 
-    # Draw
-    screen.fill(BLACK)
-    all_sprites.draw(screen)
+            # Draw
+            screen.fill(BLACK)
+            all_sprites.draw(screen)
 
-    # Render score
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    screen.blit(score_text, (10, 10))
+            # Render score
+            score_text = font.render(f"Score: {score}", True, WHITE)
+            screen.blit(score_text, (10, 10))
 
-    pygame.display.flip()
+            pygame.display.flip()
 
-pygame.quit()
-sys.exit()
+        # Show game over screen
+        show_game_over_screen(score)
