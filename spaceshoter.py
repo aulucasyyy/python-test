@@ -23,8 +23,25 @@ clock = pygame.time.Clock()
 pygame.font.init()
 font = pygame.font.SysFont(None, 36)
 
+# File to store the highest score
+HIGHEST_SCORE_FILE = "highest_score.txt"
+
+def load_highest_score():
+    try:
+        with open(HIGHEST_SCORE_FILE, "r") as file:
+            return int(file.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+def save_highest_score(score):
+    with open(HIGHEST_SCORE_FILE, "w") as file:
+        file.write(str(score))
+
 # Initialize score
 score = 0
+
+# Initialize highest score
+highest_score = load_highest_score()
 
 # Player class
 class Player(pygame.sprite.Sprite):
@@ -127,11 +144,18 @@ def show_welcome_screen():
                     return
 
 def show_game_over_screen(final_score):
+    global highest_score
+    # Update and save highest score
+    if final_score > highest_score:
+        highest_score = final_score
+        save_highest_score(highest_score)
+
     # Set up game over screen
     game_over_font = pygame.font.SysFont(None, 72)
     button_font = pygame.font.SysFont(None, 36)
     game_over_text = game_over_font.render("GAME OVER", True, WHITE)
     score_text = button_font.render(f"Your Score: {final_score}", True, WHITE)
+    highest_score_text = button_font.render(f"Highest Score: {highest_score}", True, WHITE)
     play_again_text = button_font.render("PLAY AGAIN", True, BLACK)
     
     # Button dimensions
@@ -144,6 +168,7 @@ def show_game_over_screen(final_score):
         screen.fill(BLACK)
         screen.blit(game_over_text, ((WIDTH - game_over_text.get_width()) // 2, HEIGHT // 2 - 150))
         screen.blit(score_text, ((WIDTH - score_text.get_width()) // 2, HEIGHT // 2 - 50))
+        screen.blit(highest_score_text, ((WIDTH - highest_score_text.get_width()) // 2, HEIGHT // 2))
         pygame.draw.rect(screen, WHITE, button_rect)
         screen.blit(play_again_text, (button_x + (button_width - play_again_text.get_width()) // 2, 
                                       button_y + (button_height - play_again_text.get_height()) // 2))
