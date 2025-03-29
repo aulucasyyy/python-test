@@ -160,7 +160,7 @@ def show_game_over_screen(final_score):
 # Initialize firing timer
 firing = False
 firing_timer = 0
-firing_interval = 0.000001  # Interval in seconds
+firing_interval = 0.2  # Interval in seconds
 
 # Main execution
 if __name__ == "__main__":
